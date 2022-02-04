@@ -1,0 +1,14 @@
+Modelagem
+
+Tipo: Minimização
+
+- Função Objetivo = {Custo1}*m1 + {Custo2}*m2 + ... + {CustoN}*mN
+    - Custo: valor gasto para realizar a compra no mercado, somado com o custo de deslocamento (ida e volta) até o local
+
+    - Variavel (m): representa um binário que indica se compras serão realizadas no mercado.
+        - Apenas uma das variaveis pode ter valor verdadeiro
+    
+- Restrições:  
+    - Restrição de apenas um mercado: m1 + m2 + ... + mN = 1
+    - Restrição de não negação: mN >= 0
+
