@@ -19,9 +19,7 @@ def resolver(listaDeCompras, codHotel):
     else:
         print(f"{nomeHotel} -> {nomeMercado}: R$ {custo}.")
 
-def main():
-    
-    # Listando produtos e códigos
+def listarProdutos():
     print(" PRODUTOS")
     for cod in PRODUTOS.keys():
         print('{}: {}'.format(cod, f"{PRODUTOS[cod]['nome']}".ljust(22)), end="\t")
@@ -29,14 +27,15 @@ def main():
             print('\n')
     print('\n')
 
+def carregarListaDeCompras():
     # Dando instrução para criar lista de compras
     input("\033[1m Edite o arquivo \033[4m listaDeCompras.csv \033[0m usando os códigos de produtos e quantidade desejada (aperte Enter para continuar)\033[0m")
     print('\n')
 
     # Carregando lista de compras
     linhas = carregarCsv("listaDeCompras.csv")
-    listaDeCompras = {int(linha['CodProduto']): int(linha['Quantidade']) for linha in linhas}
-    
+    listaDeCompras = {int(linha['CodProduto']): int(linha['Quantidade']) for linha in linhas}   
+
     # Mostrando lista de compras
     print("\n\033[1m LISTA DE COMPRAS: \n")
     for cod in listaDeCompras.keys():
@@ -46,6 +45,14 @@ def main():
         if cod%3 == 0:
             print('\n')
     print('\033[0m \n')
+
+    return listaDeCompras
+
+def main():
+    
+    listarProdutos()
+
+    listaDeCompras = carregarListaDeCompras()
 
     # Listando Hoteis
     print(" HOTEIS")
@@ -59,3 +66,4 @@ def main():
             resolver(listaDeCompras, cod)
 
 main()
+
