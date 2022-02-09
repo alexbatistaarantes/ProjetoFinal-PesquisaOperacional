@@ -1,14 +1,30 @@
 Modelagem
 
-Tipo: Minimização
+Min Z = Soma( c(m, p) * x(m, p), para todo p em P e m em M ) + Soma( 2 * f * c(m, p) * y(m), para todo m em M)
 
-- Função Objetivo = {Custo1}*m1 + {Custo2}*m2 + ... + {CustoN}*mN
-    - Custo: valor gasto para realizar a compra no mercado, somado com o custo de deslocamento (ida e volta) até o local
+- Restrições:
 
-    - Variavel (m): representa um binário que indica se compras serão realizadas no mercado.
-        - Apenas uma das variaveis pode ter valor verdadeiro
+    - Restrição 1: Soma( Soma( x(m, p), para todo m em M), para todo p em P) == 1
+        - Define que cada produto deve ser comprado, e deve ser comprado em um e somente um mercado
     
-- Restrições:  
-    - Restrição de apenas um mercado: m1 + m2 + ... + mN = 1
-    - Restrição de não negação: mN >= 0
+    - Restrição 2: ( (x[m, p] <= y[m, p], para todo p em P), para todo m em M)
+        - Define que se um produto de um mercado for comprado, esse mercado fará parte da lista de mercados idos
+    
+    - Restrição 3: Soma( c(m, p) * x(m, p), para todo p em P e m em M ) + Soma( 2 * f * c(m, p) * y(m), para todo m em M) <= t
+        - Define que o valor total gasto não deve ultrapassar o custo máximo
+
+- Conjuntos:
+    - P: Produtos
+    - M: Mercados
+
+- Variaveis:
+    - x(m, p): booleana que representa a compra ou não do produto p no mercado m
+    - y(m): booleana que representa a ida ou não ao mercado m
+
+- Constantes:
+    - c(m, p): preço do produto p no mercado m
+    - d(m): distância do hotel para o mercado m
+    - f: custo de deslocamento
+    - t: custo máximo
+
 

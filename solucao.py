@@ -1,43 +1,46 @@
 import pulp
 
-def calcularSolucao(listaDeCompras, mercados, distancias, custoDeslocamentoPorUnidade):
-     
+def solucionar(mercados, produtos, precos, distancias, custoDeslocamento, custoMaximo):
+
     # Definir o modelo
     model = pulp.LpProblem('Compras', sense=pulp.LpMinimize)
 
     # Adicionar as variáveis, com valor mínimo de 0
-    x = pulp.LpVariable.dicts(indexs=[i for i in mercados.keys()], cat=pulp.LpContinuous, lowBound=0, name='x')
+    x = pulp.LpVariable.dicts(indexs=precos.keys(), cat=pulp.LpBinary, lowBound=0, name='produtos-mercado')
+    y = pulp.LpVariable.dicts(indexs=mercados, cat=pulp.LpBinary, lowBound=0, name='mercados')
 
-    # Gerando restrições
-    restricao_1 = " + ".join( [f"x[{cod}]" for cod in mercados.keys()] )
-    restricao_1 += " == 1"
-    model.addConstraint(eval(restricao_1), name='restricao_1')
+    # Restrição 1
+    # Define que um de cada produto deve ser comprado
+    for codProduto in produtos.keys():
+        model.addConstraint( 
+            sum( [x[codMercado,codProduto] for codMercado in mercados] ) == 1,
+            name=f'restrição_1_{codProduto}'
+        )
 
-    # Gerando função objetivo
-    funcaoObjetivo = ""
-    for codMercado in mercados.keys():
+    # Restrição 2
+    # Define que se pelo menos um produto deve ser comprado em um mercado, a variavel de deslocamento para este mercado deve ser 1
+    for codMercado in mercados:
+        [ model.addConstraint( x[codMercado,codProduto] <= y[codMercado], name=f'restrição_2_{codMercado}_{codProduto}') for codProduto in produtos.keys() ]
 
-        mercado = mercados[codMercado]
-        produtos = mercado['produtos']
+    # Restrição 3
+    # Limite de custo total
+    model.addConstraint(
+        sum(produtos[codProduto]*precos[codMercado,codProduto]*x[codMercado,codProduto] for codMercado in mercados for codProduto in produtos)
+        +
+        sum((custoDeslocamento * 2 * distancias[codMercado]) * y[codMercado] for codMercado in mercados)
+        <= custoMaximo,
+        name='restrição_custo_total'
+    )
 
-        custoCompras = sum([(listaDeCompras[codProd] * produtos.get(codProd)) for codProd in listaDeCompras.keys()])
-        custoDeslocamento = distancias[codMercado] * custoDeslocamentoPorUnidade
-        custoTotal = custoCompras + custoDeslocamento
+    model.setObjective(
+        sum(produtos[codProduto]*precos[codMercado,codProduto]*x[codMercado,codProduto] for codMercado in mercados for codProduto in produtos)
+        +
+        sum((custoDeslocamento * 2 * distancias[codMercado]) * y[codMercado] for codMercado in mercados)
+    )
 
-        funcaoObjetivo += f"{custoTotal} * x[{codMercado}] + "
-
-    # Retirando trailing +
-    funcaoObjetivo = funcaoObjetivo.rstrip('+ ')
-
-    # Função Objetivo gerada dinamicamente
-    model.setObjective( eval(funcaoObjetivo) )
-
-    # Optimizar
+    # Soluciona
     # Define solver explicitamente para poder não mostrar log da resolução
     model.solve( pulp.PULP_CBC_CMD(msg=False) )
 
-    # Retorna a solução
-    codMercado = [cod for cod in x.keys() if x[cod].value() == 1][0]
-    custoDaCompra = pulp.value(model.objective)
-    return codMercado, custoDaCompra
+    return x, y, pulp.value(model.objective)
 

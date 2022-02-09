@@ -1,23 +1,46 @@
 from csv import DictReader
 
-from solucao import calcularSolucao
+from solucao import solucionar
 from carregarDados import carregarDados, carregarCsv
 
-MERCADOS, PRODUTOS, HOTEIS, DISTANCIAS = carregarDados()   
-DINHEIRO_DISPONIVEL= 200
 CUSTO_DESLOCAMENTO_POR_UNIDADE = 0.7
+CUSTO_TOTAL = 200
+MERCADOS, PRODUTOS, PRECOS, HOTEIS, DISTANCIAS = carregarDados()   
 
 def resolver(listaDeCompras, codHotel):
-    codMercado, custo = calcularSolucao(listaDeCompras, MERCADOS, DISTANCIAS[codHotel], CUSTO_DESLOCAMENTO_POR_UNIDADE)
-    nomeMercado = MERCADOS[codMercado]['nome']
-    nomeHotel = HOTEIS[codHotel]
+    produtosComprados, mercadosIdos, gasto = solucionar(MERCADOS.keys(), listaDeCompras, PRECOS, DISTANCIAS[codHotel], CUSTO_DESLOCAMENTO_POR_UNIDADE, CUSTO_TOTAL)
+    
+    print(f"\nPara o hotel {HOTEIS[codHotel]}")
 
-    if custo > DINHEIRO_DISPONIVEL:
-        print(f"O dinheiro disponível de R$ {DINHEIRO_DISPONIVEL} não é suficiente")
-        print(f"{nomeHotel} -> {nomeMercado}: R$ {custo}.")
+    # Mostrando lista de compras
+    print("\n\033[1m LISTA DE COMPRAS: \n")
+    for cod in listaDeCompras.keys():
+        nome = PRODUTOS[cod]['nome']
+        quantidade = listaDeCompras[cod]
+        print('{}: {}'.format(nome.ljust(22), quantidade), end="\t")
+        if cod%3 == 0:
+            print('\n')
+    print('\033[0m ')
 
-    else:
-        print(f"{nomeHotel} -> {nomeMercado}: R$ {custo}.")
+    print(f"\nCusto total = R$ {gasto} \n")
+
+    for codMercado in MERCADOS.keys():
+
+        if mercadosIdos[codMercado].value() == 1:
+            nomeMercado = MERCADOS[codMercado]
+            distancia = DISTANCIAS[codHotel][codMercado]
+            custoDeslocamento = distancia*2*CUSTO_DESLOCAMENTO_POR_UNIDADE
+
+            print(f"Mercado - {nomeMercado}:")
+            print(f" - Custo deslocamento ({distancia}km) = R$ {custoDeslocamento}")
+            for codProduto in listaDeCompras.keys():
+
+                if produtosComprados[codMercado, codProduto].value() == 1:
+                    nomeProduto = PRODUTOS[codProduto]['nome']
+                    quantidade = listaDeCompras[codProduto]
+                    precoUnitario = PRECOS[codMercado, codProduto]
+                    precoTotal = quantidade*precoUnitario
+                    print(f" - {quantidade}un de {nomeProduto} (R$ {precoUnitario}) = R$ {precoTotal}")
 
 def listarProdutos():
     print(" PRODUTOS")
@@ -36,16 +59,6 @@ def carregarListaDeCompras():
     linhas = carregarCsv("listaDeCompras.csv")
     listaDeCompras = {int(linha['CodProduto']): int(linha['Quantidade']) for linha in linhas}   
 
-    # Mostrando lista de compras
-    print("\n\033[1m LISTA DE COMPRAS: \n")
-    for cod in listaDeCompras.keys():
-        nome = PRODUTOS[cod]['nome']
-        quantidade = listaDeCompras[cod]
-        print('{}: {}'.format(nome.ljust(22), quantidade), end="\t")
-        if cod%3 == 0:
-            print('\n')
-    print('\033[0m \n')
-
     return listaDeCompras
 
 def main():
@@ -60,8 +73,12 @@ def main():
     try:
         # Solicitando código do hotel
         codHotel = int(input("\n\033[1m Digite o código do hotel (ou aperte Enter para realizar a otimização da lista para todos os hoteis):\033[0m "))
+
+        # Resolvendo para um hotel
         resolver(listaDeCompras, codHotel)
+
     except:
+        # Resolvendo para todos os hoteis
         for cod in HOTEIS.keys():
             resolver(listaDeCompras, cod)
 
